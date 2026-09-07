@@ -52,3 +52,25 @@ export const pacienteSchema = z.object({
   convenio: z.string().optional(),
   numeroCarteirinha: z.string().optional(),
 });
+
+export const agendaSchema = z.object({
+  medicoId: z.string().uuid(),
+  unidadeId: z.string().uuid(),
+  diaSemana: z.number().int().min(0).max(6),
+  horaInicio: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Formato esperado: HH:MM'),
+  horaFim: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Formato esperado: HH:MM'),
+  duracaoConsulta: z.number().int().min(5).max(240).optional(),
+});
+
+export const consultaSchema = z.object({
+  pacienteId: z.string().uuid(),
+  medicoId: z.string().uuid(),
+  unidadeId: z.string().uuid(),
+  dataHora: z.string().datetime(),
+  motivoConsulta: z.string().optional(),
+  observacoes: z.string().optional(),
+});
+
+export const atualizarStatusConsultaSchema = z.object({
+  status: z.enum(['AGENDADA', 'CONFIRMADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA', 'FALTOU']),
+});
