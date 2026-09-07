@@ -96,7 +96,7 @@ model MedicoEspecialidade {
   medico          Medico        @relation(fields: [medicoId], references: [id])
   especialidadeId String
   especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
-  rqe             String?       // Registro de Qualificação de Especialista
+  rqe             String?
 
   @@id([medicoId, especialidadeId])
   @@map("medico_especialidades")
@@ -146,10 +146,10 @@ model Agenda {
   unidadeId     String
   unidade       Unidade   @relation(fields: [unidadeId], references: [id])
 
-  diaSemana     Int       // 0 = domingo ... 6 = sábado
-  horaInicio    String    // "08:00"
-  horaFim       String    // "18:00"
-  duracaoConsulta Int     @default(30) // minutos
+  diaSemana     Int
+  horaInicio    String
+  horaFim       String
+  duracaoConsulta Int     @default(30)
   ativo         Boolean   @default(true)
 
   @@map("agendas")
@@ -191,8 +191,8 @@ model AuditLog {
   id            String    @id @default(uuid())
   userId        String?
   user          User?     @relation(fields: [userId], references: [id])
-  acao          String    // ex: "LOGIN", "VIEW_PACIENTE", "UPDATE_CONSULTA"
-  entidade      String?   // ex: "Paciente", "Consulta"
+  acao          String
+  entidade      String?
   entidadeId    String?
   detalhes      String?
   ip            String?
