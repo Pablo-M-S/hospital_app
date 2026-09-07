@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { asyncHandler } from '../utils/asyncHandler';
 import * as controller from '../controllers/medicoController';
 import { autenticar, autorizar } from '../middleware/auth';
 import { validar } from '../middleware/validate';
@@ -9,29 +10,29 @@ const router = Router();
 
 router.use(autenticar);
 
-router.get('/', controller.listar);
-router.get('/:id', controller.buscarPorId);
+router.get('/', asyncHandler(controller.listar));
+router.get('/:id', asyncHandler(controller.buscarPorId));
 
 router.post(
   '/',
   autorizar('ADMIN'),
   validar(medicoSchema),
   registrarAuditoria('CRIAR_MEDICO', 'Medico'),
-  controller.criar
+  asyncHandler(controller.criar)
 );
 
 router.put(
   '/:id',
   autorizar('ADMIN'),
   registrarAuditoria('ATUALIZAR_MEDICO', 'Medico'),
-  controller.atualizar
+  asyncHandler(controller.atualizar)
 );
 
 router.delete(
   '/:id',
   autorizar('ADMIN'),
   registrarAuditoria('DESATIVAR_MEDICO', 'Medico'),
-  controller.desativar
+  asyncHandler(controller.desativar)
 );
 
 export default router;
