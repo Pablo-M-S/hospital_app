@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: hospital
+      POSTGRES_PASSWORD: hospital
+      POSTGRES_DB: hospital_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://hospital:hospital@db:5432/hospital_app?schema=public"
+      JWT_SECRET: "troque-por-uma-chave-secreta-forte"
+      JWT_EXPIRES_IN: "8h"
+      PORT: 3000
+      NODE_ENV: production
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
