@@ -19,10 +19,12 @@ export async function login(req: Request, res: Response) {
     throw new AppError('Credenciais inválidas', 401);
   }
 
+  const expiresIn = (process.env.JWT_EXPIRES_IN || '8h') as jwt.SignOptions['expiresIn'];
+
   const token = jwt.sign(
     { userId: user.id, role: user.role },
     process.env.JWT_SECRET as string,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    { expiresIn }
   );
 
   return res.json({
