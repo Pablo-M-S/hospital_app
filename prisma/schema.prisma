@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USUÁRIOS E CONTROLE DE ACESSO ============
+
+enum UserRole {
+  ADMIN
+  MEDICO
+  RECEPCAO
+  PACIENTE
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  role          UserRole
+  ativo         Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  medico        Medico?
+  paciente      Paciente?
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+// ============ ESPECIALIDADES MÉDICAS ============
+
+model Especialidade {
+  id            String    @id @default(uuid())
+  nome          String    @unique
+  codigoCFM     String?   @unique
+  descricao     String?
+  ativo         Boolean   @default(true)
+
+  medicos       MedicoEspecialidade[]
+
+  @@map("especialidades")
+}
+
+// ============ UNIDADES / CLÍNICAS ============
+
+model Unidade {
+  id            String    @id @default(uuid())
+  nome          String
+  cnpj          String    @unique
+  endereco      String
+  cidade        String
+  estado        String
+  cep           String
+  telefone      String?
+  ativo         Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+
+  medicos       MedicoUnidade[]
+  consultas     Consulta[]
+  agendas       Agenda[]
+
+  @@map("unidades")
+}
+
+// ============ MÉDICOS ============
+
+model Medico {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+
+  nomeCompleto  String
+  crm           String    @unique
+  ufCrm         String
+  cpf           String    @unique
+  telefone      String?
+  dataNascimento DateTime?
+  ativo         Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+
+  especialidades MedicoEspecialidade[]
+  unidades      MedicoUnidade[]
+  agendas       Agenda[]
+  consultas     Consulta[]
+
+  @@map("medicos")
+}
+
+model MedicoEspecialidade {
+  medicoId        String
+  medico          Medico        @relation(fields: [medicoId], references: [id])
+  especialidadeId String
+  especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
+  rqe             String?       // Registro de Qualificação de Especialista
+
+  @@id([medicoId, especialidadeId])
+  @@map("medico_especialidades")
+}
+
+model MedicoUnidade {
+  medicoId    String
+  medico      Medico   @relation(fields: [medicoId], references: [id])
+  unidadeId   String
+  unidade     Unidade  @relation(fields: [unidadeId], references: [id])
+
+  @@id([medicoId, unidadeId])
+  @@map("medico_unidades")
+}
+
+// ============ PACIENTES ============
+
+model Paciente {
+  id            String    @id @default(uuid())
+  userId        String?   @unique
+  user          User?     @relation(fields: [userId], references: [id])
+
+  nomeCompleto  String
+  cpf           String    @unique
+  dataNascimento DateTime
+  telefone      String
+  email         String?
+  endereco      String?
+  cidade        String?
+  estado        String?
+  cep           String?
+  convenio      String?
+  numeroCarteirinha String?
+  createdAt     DateTime  @default(now())
+
+  consultas     Consulta[]
+
+  @@map("pacientes")
+}
+
+// ============ AGENDA E DISPONIBILIDADE ============
+
+model Agenda {
+  id            String    @id @default(uuid())
+  medicoId      String
+  medico        Medico    @relation(fields: [medicoId], references: [id])
+  unidadeId     String
+  unidade       Unidade   @relation(fields: [unidadeId], references: [id])
+
+  diaSemana     Int       // 0 = domingo ... 6 = sábado
+  horaInicio    String    // "08:00"
+  horaFim       String    // "18:00"
+  duracaoConsulta Int     @default(30) // minutos
+  ativo         Boolean   @default(true)
+
+  @@map("agendas")
+}
+
+// ============ CONSULTAS ============
+
+enum StatusConsulta {
+  AGENDADA
+  CONFIRMADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+  FALTOU
+}
+
+model Consulta {
+  id            String          @id @default(uuid())
+  pacienteId    String
+  paciente      Paciente        @relation(fields: [pacienteId], references: [id])
+  medicoId      String
+  medico        Medico          @relation(fields: [medicoId], references: [id])
+  unidadeId     String
+  unidade       Unidade         @relation(fields: [unidadeId], references: [id])
+
+  dataHora      DateTime
+  status        StatusConsulta  @default(AGENDADA)
+  motivoConsulta String?
+  observacoes   String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("consultas")
+}
+
+// ============ AUDITORIA (LGPD) ============
+
+model AuditLog {
+  id            String    @id @default(uuid())
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
+  acao          String    // ex: "LOGIN", "VIEW_PACIENTE", "UPDATE_CONSULTA"
+  entidade      String?   // ex: "Paciente", "Consulta"
+  entidadeId    String?
+  detalhes      String?
+  ip            String?
+  createdAt     DateTime  @default(now())
+
+  @@map("audit_logs")
+}
