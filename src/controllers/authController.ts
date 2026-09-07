@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
+import { AppError } from '../utils/AppError';
 
 export async function login(req: Request, res: Response) {
   const { email, senha } = req.body;
@@ -9,13 +10,13 @@ export async function login(req: Request, res: Response) {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !user.ativo) {
-    return res.status(401).json({ erro: 'Credenciais inválidas' });
+    throw new AppError('Credenciais inválidas', 401);
   }
 
   const senhaValida = await bcrypt.compare(senha, user.passwordHash);
 
   if (!senhaValida) {
-    return res.status(401).json({ erro: 'Credenciais inválidas' });
+    throw new AppError('Credenciais inválidas', 401);
   }
 
   const token = jwt.sign(
@@ -36,7 +37,7 @@ export async function registrar(req: Request, res: Response) {
   const usuarioExistente = await prisma.user.findUnique({ where: { email } });
 
   if (usuarioExistente) {
-    return res.status(409).json({ erro: 'Email já cadastrado' });
+    throw AppError.conflito('Email já cadastrado');
   }
 
   const passwordHash = await bcrypt.hash(senha, 10);

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
+import { AppError } from '../utils/AppError';
 
 export async function criar(req: Request, res: Response) {
   const especialidade = await prisma.especialidade.create({ data: req.body });
@@ -20,7 +21,7 @@ export async function buscarPorId(req: Request, res: Response) {
   });
 
   if (!especialidade) {
-    return res.status(404).json({ erro: 'Especialidade não encontrada' });
+    throw AppError.naoEncontrado('Especialidade');
   }
 
   return res.json(especialidade);

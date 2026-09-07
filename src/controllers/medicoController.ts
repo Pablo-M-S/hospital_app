@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
+import { AppError } from '../utils/AppError';
 
 export async function criar(req: Request, res: Response) {
   const { especialidadeIds, unidadeIds, dataNascimento, ...dadosMedico } = req.body;
@@ -57,7 +58,7 @@ export async function buscarPorId(req: Request, res: Response) {
   });
 
   if (!medico) {
-    return res.status(404).json({ erro: 'Médico não encontrado' });
+    throw AppError.naoEncontrado('Médico');
   }
 
   return res.json(medico);

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
+import { AppError } from '../utils/AppError';
 
 export async function criar(req: Request, res: Response) {
   const unidade = await prisma.unidade.create({ data: req.body });
@@ -18,7 +19,7 @@ export async function buscarPorId(req: Request, res: Response) {
   const unidade = await prisma.unidade.findUnique({ where: { id: req.params.id } });
 
   if (!unidade) {
-    return res.status(404).json({ erro: 'Unidade não encontrada' });
+    throw AppError.naoEncontrado('Unidade');
   }
 
   return res.json(unidade);
